@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script>
+    function togglePasswordVisibility(inputId, iconId) {
+      const passwordInput = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    async function register(event) {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const email = formData.get('email');
+      const password = formData.get('password');
+      const confirmPassword = formData.get('confirmPassword');
+
+      if (password !== confirmPassword) {
+        showModal('Passwords do not match');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password, confirmPassword })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.errors.join(', ') || 'Registration failed');
+        }
+
+        const data = await response.json();
+
+        localStorage.setItem('x-auth-token', data.token);
+        localStorage.setItem('id', data.id);
+
+        window.location.href = '/notes';
+      } catch (error) {
+        console.error('Error:', error);
+        showModal(error.message);
+      }
+    }
+
+    function showModal(message) {
+      const modal = document.getElementById('error-modal');
+      const modalMessage = document.getElementById('modal-message');
+      modalMessage.textContent = message;
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('error-modal');
+      modal.classList.add('hidden');
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="content bg-white shadow-lg rounded-lg p-8 w-96">
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-gray-800">Register Form</h2>
+    </div>
+    <form onsubmit="register(event)">
+      <div class="field relative mb-4">
+        <input type="email" name="email" required placeholder=" " class="px-4 py-2 border rounded-lg w-full">
+        <label class="absolute left-4 top-2 text-gray-500 transition-all duration-200">Email</label>
+        <span class="fas fa-user absolute top-4 right-4 text-gray-400"></span>
+      </div>
+      <div class="field relative mb-4">
+        <input type="password" name="password" id="password" required placeholder=" " class="px-4 py-2 border rounded-lg w-full">
+        <label class="absolute left-4 top-2 text-gray-500 transition-all duration-200">Password</label>
+        <span class="fas fa-eye absolute top-4 right-4 text-gray-400 cursor-pointer" id="toggle-password" onclick="togglePasswordVisibility('password', 'toggle-password')"></span>
+      </div>
+      <div class="field relative mb-4">
+        <input type="password" name="confirmPassword" id="confirmPassword" required placeholder=" " class="px-4 py-2 border rounded-lg w-full">
+        <label class="absolute left-4 top-2 text-gray-500 transition-all duration-200">Confirm Password</label>
+        <span class="fas fa-eye absolute top-4 right-4 text-gray-400 cursor-pointer" id="toggle-confirm-password" onclick="togglePasswordVisibility('confirmPassword', 'toggle-confirm-password')"></span>
+      </div>
+      <button class="signIn mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg w-full">Sign Up</button>
+      <div class="text-center mt-4 text-gray-600">
+        Already have an account? <a href="/login" class="text-blue-600 hover:underline">Login here</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Error Modal -->
+  <div id="error-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white p-4 rounded-lg shadow-lg">
+      <p id="modal-message" class="text-red-600"></p>
+      <button onclick="closeModal()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg">Close</button>
+    </div>
+  </div>
+</body>
+</html>

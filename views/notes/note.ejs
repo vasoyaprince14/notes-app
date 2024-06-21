@@ -1,0 +1,64 @@
+<!-- views/note.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Note</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen">
+  <header class="bg-white dark:bg-gray-800 shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Note Details</h1>
+      <div class="flex space-x-4">
+        <a href="/notes" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">Back</a>
+        <a href="/notes/edit/<%= note._id %>" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">Edit</a>
+        <form action="/api/notes/<%= note._id %>" method="post" onsubmit="return deleteNote(event, '<%= note._id %>')">
+          <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800">Delete</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  <main class="container mx-auto mt-8">
+    <div class="max-w-3xl bg-white p-6 border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
+      <h2 class="mb-4 text-3xl font-bold text-gray-900 dark:text-white"><%= note.title %></h2>
+      <p class="text-lg text-gray-700 dark:text-gray-400"><%= note.content %></p>
+    </div>
+  </main>
+
+  <script>
+    async function deleteNote(event, noteId) {
+      event.preventDefault();
+
+      const confirmation = confirm('Are you sure you want to delete this note? This action cannot be undone.');
+
+      if (!confirmation) {
+        return;
+      }
+
+      const token = localStorage.getItem('x-auth-token');
+
+      try {
+        const response = await fetch(`/api/notes/${noteId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete note');
+        }
+
+        window.location.href = '/notes';
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        alert('Failed to delete note. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>
